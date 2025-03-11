@@ -181,6 +181,52 @@
 {% block scripts %}
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script type="text/javascript">
+function addNotes(predictionId) {
+    document.getElementById('predictionId').value = predictionId;
+    document.getElementById('notesModal').classList.remove('hidden');
+    document.getElementById('notesModal').classList.add('flex');
+}
+
+function closeModal() {
+    document.getElementById('notesModal').classList.add('hidden');
+    document.getElementById('notesModal').classList.remove('flex');
+    document.getElementById('notes').value = '';
+}
+
+function saveNotes() {
+    const predictionId = document.getElementById('predictionId').value;
+    const notes = document.getElementById('notes').value;
+
+    fetch('/add_notes', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': '{{ csrf_token() }}'
+        },
+        body: JSON.stringify({
+            prediction_id: predictionId,
+            notes: notes
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            closeModal();
+            location.reload(); // Reload to show updated notes
+        } else {
+            alert('Error saving notes: ' + (data.error || 'Unknown error'));
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error saving notes. Please try again.');
+    });
+}
+
+function downloadReport(predictionId) {
+    window.location.href = `/download_report/${predictionId}`;
+}
+
 (function() {
     // Get data from template
     var predictions = {{ predictions|map(attribute='predicted_age')|list|tojson|safe }};
@@ -281,50 +327,6 @@
             }
         }
     });
-
-    function downloadReport(predictionId) {
-        window.location.href = `/download_report/${predictionId}`;
-    }
-
-    function addNotes(predictionId) {
-        document.getElementById('predictionId').value = predictionId;
-        document.getElementById('notesModal').classList.remove('hidden');
-        document.getElementById('notesModal').classList.add('flex');
-    }
-
-    function closeModal() {
-        document.getElementById('notesModal').classList.remove('flex');
-        document.getElementById('notesModal').classList.add('hidden');
-    }
-
-    function saveNotes() {
-        const predictionId = document.getElementById('predictionId').value;
-        const notes = document.getElementById('notes').value;
-        
-        fetch('/add_notes', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRFToken': document.querySelector('meta[name="csrf-token"]').content
-            },
-            body: JSON.stringify({
-                prediction_id: predictionId,
-                notes: notes
-            })
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                location.reload();
-            } else {
-                alert('Error saving notes: ' + data.error);
-            }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            alert('Error saving notes');
-        });
-    }
 })();
 </script>
 {% endblock %} 

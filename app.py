@@ -16,15 +16,15 @@ from tensorflow.keras.preprocessing.image import load_img, img_to_array
 from tensorflow.keras.layers import Dense, GlobalAveragePooling2D, Dropout, BatchNormalization
 from reportlab.lib.pagesizes import letter
 from reportlab.lib.styles import getSampleStyleSheet
-from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Image
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Image as RLImage
 from flask_cors import CORS
 from flask_wtf.csrf import CSRFProtect
+from flask_wtf import FlaskForm
+from wtforms import StringField, PasswordField, SubmitField, validators
 import cv2
 import matplotlib.pyplot as plt
 from reportlab.pdfgen import canvas
 from reportlab.lib import colors
-from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Image as RLImage
-from reportlab.lib.styles import ParagraphStyle
 from PIL import Image
 from forms import LoginForm
 
@@ -81,7 +81,7 @@ def create_model():
     return model
 
 app = Flask(__name__)
-app.config['SECRET_KEY'] = 'your-secret-key-here'  # Change this to a secure secret key
+app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'your-secret-key-here')  # Make sure to set this in production
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///users.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['WTF_CSRF_TIME_LIMIT'] = 3600  # Set CSRF token expiry to 1 hour
@@ -187,12 +187,19 @@ def preprocess_image(image_data):
 def index():
     return render_template('index.html')
 
+class SignupForm(FlaskForm):
+    username = StringField('Username', [validators.DataRequired(), validators.Length(min=4, max=25)])
+    email = StringField('Email', [validators.DataRequired(), validators.Email()])
+    password = PasswordField('Password', [validators.DataRequired(), validators.Length(min=6)])
+    submit = SubmitField('Sign Up')
+
 @app.route('/signup', methods=['GET', 'POST'])
 def signup():
-    if request.method == 'POST':
-        username = request.form.get('username')
-        email = request.form.get('email')
-        password = request.form.get('password')
+    form = SignupForm()
+    if form.validate_on_submit():
+        username = form.username.data
+        email = form.email.data
+        password = form.password.data
         
         if User.query.filter_by(username=username).first():
             flash('Username already exists')
@@ -213,7 +220,7 @@ def signup():
         flash('Registration successful! Please login.')
         return redirect(url_for('login'))
     
-    return render_template('signup.html')
+    return render_template('signup.html', form=form)
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -530,7 +537,7 @@ def download_report(prediction_id):
     # Original X-ray
     img_path = os.path.join(app.static_folder, 'predictions', prediction.image_filename)
     if os.path.exists(img_path):
-        img = Image(img_path, width=250, height=250)
+        img = RLImage(img_path, width=250, height=250)
         elements.append(img)
         elements.append(Paragraph("Original X-ray", styles['Normal']))
     
@@ -539,7 +546,7 @@ def download_report(prediction_id):
         heatmap_path = os.path.join(app.static_folder, 'predictions', notes['heatmap_filename'])
         if os.path.exists(heatmap_path):
             elements.append(Spacer(1, 12))
-            img = Image(heatmap_path, width=250, height=250)
+            img = RLImage(heatmap_path, width=250, height=250)
             elements.append(img)
             elements.append(Paragraph("Model Focus Heatmap", styles['Normal']))
     
