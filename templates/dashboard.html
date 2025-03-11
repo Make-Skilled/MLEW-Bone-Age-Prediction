@@ -1,0 +1,262 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto">
+    <h2 class="text-3xl font-bold text-gray-900 mb-8 text-center">Bone Age Prediction</h2>
+    
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+        <!-- Upload Section -->
+        <div class="bg-white shadow rounded-lg p-6">
+            <h3 class="text-xl font-semibold text-gray-800 mb-4">Upload X-ray Image</h3>
+            <form id="uploadForm" class="space-y-6">
+                <div>
+                    <div class="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-md relative">
+                        <div class="space-y-1 text-center">
+                            <svg id="upload-icon" class="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48">
+                                <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                            </svg>
+                            <div class="flex text-sm text-gray-600">
+                                <label for="file-upload" class="relative cursor-pointer bg-white rounded-md font-medium text-primary hover:text-blue-700">
+                                    <span>Upload a file</span>
+                                    <input id="file-upload" name="image" type="file" class="sr-only" accept="image/*">
+                                </label>
+                                <p class="pl-1">or drag and drop</p>
+                            </div>
+                            <p class="text-xs text-gray-500">PNG, JPG, JPEG only</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Image Preview -->
+                    <div id="image-preview-container" class="hidden mt-4">
+                        <div class="relative">
+                            <img id="image-preview" class="w-full h-64 object-contain rounded-lg" src="" alt="Preview">
+                            <button id="remove-image" class="absolute top-2 right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div>
+                    <button type="submit" class="w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary transition-colors duration-200">
+                        <span id="submit-text">Predict Bone Age</span>
+                        <div id="loading-spinner" class="hidden">
+                            <svg class="animate-spin ml-2 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                        </div>
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Result Section -->
+        <div id="result" class="hidden bg-white shadow rounded-lg p-6">
+            <h3 class="text-xl font-semibold text-gray-800 mb-4">Prediction Result</h3>
+            <div class="space-y-4">
+                <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                    <p class="text-gray-700 font-medium">Predicted Bone Age:</p>
+                    <div class="flex items-center">
+                        <p id="predicted-age" class="text-3xl font-bold text-primary"></p>
+                        <span class="ml-2 text-gray-600">years</span>
+                    </div>
+                </div>
+                <div class="text-sm text-gray-600">
+                    <p class="mb-2">Note: This prediction is based on the analysis of hand X-ray images using deep learning.</p>
+                    <p>For medical purposes, please consult with a qualified healthcare professional.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Error Alert -->
+    <div id="error-alert" class="hidden mt-6">
+        <div class="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded-r-lg" role="alert">
+            <p class="font-bold">Error</p>
+            <p id="error-message"></p>
+        </div>
+    </div>
+</div>
+
+<script>
+// Get CSRF token from meta tag
+const csrfToken = "{{ csrf_token() }}";
+
+function showError(message) {
+    const errorAlert = document.getElementById('error-alert');
+    const errorMessage = document.getElementById('error-message');
+    errorMessage.textContent = message;
+    errorAlert.classList.remove('hidden');
+    setTimeout(() => {
+        errorAlert.classList.add('hidden');
+    }, 5000);
+}
+
+function showLoading(show) {
+    const submitText = document.getElementById('submit-text');
+    const loadingSpinner = document.getElementById('loading-spinner');
+    if (show) {
+        submitText.textContent = 'Predicting...';
+        loadingSpinner.classList.remove('hidden');
+    } else {
+        submitText.textContent = 'Predict Bone Age';
+        loadingSpinner.classList.add('hidden');
+    }
+}
+
+// Image preview functionality
+function handleImagePreview(file) {
+    const previewContainer = document.getElementById('image-preview-container');
+    const preview = document.getElementById('image-preview');
+    const uploadIcon = document.getElementById('upload-icon');
+    
+    if (file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            preview.src = e.target.result;
+            previewContainer.classList.remove('hidden');
+            uploadIcon.classList.add('hidden');
+        }
+        reader.readAsDataURL(file);
+    } else {
+        previewContainer.classList.add('hidden');
+        uploadIcon.classList.remove('hidden');
+        preview.src = '';
+    }
+}
+
+// Remove image functionality
+document.getElementById('remove-image').addEventListener('click', (e) => {
+    e.preventDefault();
+    const fileInput = document.getElementById('file-upload');
+    fileInput.value = '';
+    handleImagePreview(null);
+});
+
+// File input change handler
+document.getElementById('file-upload').addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if (file) {
+        // Check file type
+        const allowedTypes = ['image/png', 'image/jpeg', 'image/jpg'];
+        if (!allowedTypes.includes(file.type)) {
+            showError('Please upload a PNG or JPEG image');
+            e.target.value = '';
+            return;
+        }
+        
+        // Check file size
+        if (file.size > 10 * 1024 * 1024) {
+            showError('File size must be less than 10MB');
+            e.target.value = '';
+            return;
+        }
+        
+        handleImagePreview(file);
+    }
+});
+
+document.getElementById('uploadForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    const formData = new FormData();
+    const fileInput = document.getElementById('file-upload');
+    const file = fileInput.files[0];
+    
+    if (!file) {
+        showError('Please select a file to upload');
+        return;
+    }
+    
+    formData.append('image', file);
+    showLoading(true);
+    
+    try {
+        const response = await fetch('/predict', {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-CSRFToken': csrfToken
+            },
+            credentials: 'same-origin'
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            document.getElementById('result').classList.remove('hidden');
+            document.getElementById('predicted-age').textContent = data.predicted_age;
+            document.getElementById('error-alert').classList.add('hidden');
+            
+            // Smooth scroll to result
+            document.getElementById('result').scrollIntoView({ behavior: 'smooth' });
+        } else {
+            showError(data.error || 'An error occurred during prediction');
+        }
+    } catch (error) {
+        showError('Error uploading image: ' + error.message);
+    } finally {
+        showLoading(false);
+    }
+});
+
+// Drag and drop functionality
+const dropZone = document.querySelector('form');
+const fileInput = document.getElementById('file-upload');
+
+['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+    dropZone.addEventListener(eventName, preventDefaults, false);
+});
+
+function preventDefaults (e) {
+    e.preventDefault();
+    e.stopPropagation();
+}
+
+['dragenter', 'dragover'].forEach(eventName => {
+    dropZone.addEventListener(eventName, highlight, false);
+});
+
+['dragleave', 'drop'].forEach(eventName => {
+    dropZone.addEventListener(eventName, unhighlight, false);
+});
+
+function highlight(e) {
+    dropZone.classList.add('border-primary');
+}
+
+function unhighlight(e) {
+    dropZone.classList.remove('border-primary');
+}
+
+dropZone.addEventListener('drop', handleDrop, false);
+
+function handleDrop(e) {
+    const dt = e.dataTransfer;
+    const files = dt.files;
+    
+    if (files.length > 0) {
+        const file = files[0];
+        
+        // Check file type
+        const allowedTypes = ['image/png', 'image/jpeg', 'image/jpg'];
+        if (!allowedTypes.includes(file.type)) {
+            showError('Please upload a PNG or JPEG image');
+            return;
+        }
+        
+        // Check file size
+        if (file.size > 10 * 1024 * 1024) {
+            showError('File size must be less than 10MB');
+            return;
+        }
+        
+        fileInput.files = files;
+        handleImagePreview(file);
+    }
+}
+</script>
+{% endblock %} 

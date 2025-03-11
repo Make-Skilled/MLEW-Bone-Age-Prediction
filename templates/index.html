@@ -1,0 +1,123 @@
+{% extends "base.html" %}
+
+{% block content %}
+<!-- Hero Section -->
+<div class="bg-gradient-to-r from-blue-50 to-indigo-50 py-16">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center">
+            <h1 class="text-4xl font-bold text-gray-900 mb-4">Welcome to Bone Age Predictor</h1>
+            <p class="text-xl text-gray-600 mb-8 max-w-3xl mx-auto">Harness the power of AI to accurately predict bone age from hand X-rays. Our advanced deep learning model helps medical professionals make informed decisions quickly and reliably.</p>
+            
+            {% if current_user.is_authenticated %}
+                <a href="{{ url_for('dashboard') }}" class="bg-primary text-white px-8 py-4 rounded-lg text-lg font-semibold hover:bg-blue-700 transition duration-300 shadow-lg">
+                    Go to Dashboard
+                </a>
+            {% else %}
+                <div class="space-x-4">
+                    <a href="{{ url_for('login') }}" class="bg-primary text-white px-8 py-4 rounded-lg text-lg font-semibold hover:bg-blue-700 transition duration-300 shadow-lg">
+                        Get Started
+                    </a>
+                    <a href="{{ url_for('signup') }}" class="bg-white text-primary border-2 border-primary px-8 py-4 rounded-lg text-lg font-semibold hover:bg-gray-50 transition duration-300 shadow-lg">
+                        Sign Up Free
+                    </a>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Features Section -->
+<div class="py-16 bg-white">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center mb-12">
+            <h2 class="text-3xl font-bold text-gray-900">Powerful Features</h2>
+            <p class="mt-4 text-xl text-gray-600">Everything you need for accurate bone age assessment</p>
+        </div>
+        
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <!-- Feature 1 -->
+            <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition duration-300">
+                <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mb-4">
+                    <i class="fas fa-brain text-primary text-2xl"></i>
+                </div>
+                <h3 class="text-xl font-semibold text-gray-900 mb-2">AI-Powered Analysis</h3>
+                <p class="text-gray-600">State-of-the-art deep learning model trained on thousands of X-ray images for accurate predictions.</p>
+            </div>
+            
+            <!-- Feature 2 -->
+            <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition duration-300">
+                <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center mb-4">
+                    <i class="fas fa-chart-line text-success text-2xl"></i>
+                </div>
+                <h3 class="text-xl font-semibold text-gray-900 mb-2">Detailed Analytics</h3>
+                <p class="text-gray-600">Comprehensive reports with confidence scores, visualizations, and historical tracking.</p>
+            </div>
+            
+            <!-- Feature 3 -->
+            <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition duration-300">
+                <div class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center mb-4">
+                    <i class="fas fa-file-pdf text-purple-600 text-2xl"></i>
+                </div>
+                <h3 class="text-xl font-semibold text-gray-900 mb-2">PDF Reports</h3>
+                <p class="text-gray-600">Generate professional PDF reports with detailed findings and visualizations.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- How It Works -->
+<div class="py-16 bg-gray-50">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center mb-12">
+            <h2 class="text-3xl font-bold text-gray-900">How It Works</h2>
+            <p class="mt-4 text-xl text-gray-600">Get started in three simple steps</p>
+        </div>
+        
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <!-- Step 1 -->
+            <div class="text-center">
+                <div class="w-16 h-16 bg-primary text-white rounded-full flex items-center justify-center text-2xl font-bold mx-auto mb-4">1</div>
+                <h3 class="text-xl font-semibold text-gray-900 mb-2">Upload X-ray</h3>
+                <p class="text-gray-600">Upload a hand X-ray image in common formats (JPEG, PNG, DICOM)</p>
+            </div>
+            
+            <!-- Step 2 -->
+            <div class="text-center">
+                <div class="w-16 h-16 bg-primary text-white rounded-full flex items-center justify-center text-2xl font-bold mx-auto mb-4">2</div>
+                <h3 class="text-xl font-semibold text-gray-900 mb-2">AI Analysis</h3>
+                <p class="text-gray-600">Our AI model analyzes the image and predicts the bone age</p>
+            </div>
+            
+            <!-- Step 3 -->
+            <div class="text-center">
+                <div class="w-16 h-16 bg-primary text-white rounded-full flex items-center justify-center text-2xl font-bold mx-auto mb-4">3</div>
+                <h3 class="text-xl font-semibold text-gray-900 mb-2">Get Results</h3>
+                <p class="text-gray-600">View detailed results with confidence scores and generate reports</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Call to Action -->
+<div class="py-16 bg-primary">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+        <h2 class="text-3xl font-bold text-white mb-4">Ready to Get Started?</h2>
+        <p class="text-xl text-blue-100 mb-8">Join healthcare professionals worldwide who trust our bone age prediction system</p>
+        
+        {% if current_user.is_authenticated %}
+            <a href="{{ url_for('dashboard') }}" class="bg-white text-primary px-8 py-4 rounded-lg text-lg font-semibold hover:bg-gray-100 transition duration-300 shadow-lg">
+                Go to Dashboard
+            </a>
+        {% else %}
+            <div class="space-x-4">
+                <a href="{{ url_for('signup') }}" class="bg-white text-primary px-8 py-4 rounded-lg text-lg font-semibold hover:bg-gray-100 transition duration-300 shadow-lg">
+                    Create Free Account
+                </a>
+                <a href="{{ url_for('login') }}" class="bg-transparent text-white border-2 border-white px-8 py-4 rounded-lg text-lg font-semibold hover:bg-white hover:text-primary transition duration-300 shadow-lg">
+                    Sign In
+                </a>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %} 
